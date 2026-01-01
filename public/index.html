@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Messaging App (Socket)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f6f8; }
+    .container { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+    h1 { margin: 0 0 10px; font-size: 22px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    select, input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
+    input { flex: 1; min-width: 220px; }
+    button { padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    button.primary { background: #2563eb; color: white; }
+    button.gray { background: #e5e7eb; }
+    .status { font-size: 13px; margin-left: auto; color: #555; }
+    .list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { padding: 12px; border-radius: 12px; background: #f3f4f6; }
+    .meta { font-size: 12px; color: #555; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 10px; }
+    .content { font-size: 14px; color: #111; white-space: pre-wrap; }
+    .pill { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #e5e7eb; }
+    .pill.sent { background: #dbeafe; color: #1e40af; }
+    .pill.seen { background: #dcfce7; color: #166534; }
+    .small { font-size: 12px; color: #666; margin-top: 10px; }
+    .danger { color: #b91c1c; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>💬 Messaging App (NestJS + Socket.io)</h1>
+
+      <div class="row">
+        <button class="gray" id="btnReload">↻ Reload users</button>
+
+        <select id="userSelect">
+          <option value="">Select user...</option>
+        </select>
+
+        <span class="status" id="connStatus">Connecting...</span>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <input id="msgInput" type="text" placeholder="Type a message..." />
+        <button class="primary" id="btnSend">Send</button>
+      </div>
+
+      <div class="small">
+        Tip: Create users using <b>POST /users</b> once, then pick them here.
+        <span id="error" class="danger"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="row">
+        <h1 style="margin:0;">📨 Messages</h1>
+        <button class="gray" id="btnLoadOld" style="margin-left:auto;">Load old messages</button>
+      </div>
+      <div id="list" class="list"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const BASE_URL = "http://localhost:3001";
+
+    const userSelect = document.getElementById("userSelect");
+    const msgInput = document.getElementById("msgInput");
+    const btnSend = document.getElementById("btnSend");
+    const btnReload = document.getElementById("btnReload");
+    const btnLoadOld = document.getElementById("btnLoadOld");
+    const list = document.getElementById("list");
+    const connStatus = document.getElementById("connStatus");
+    const errorEl = document.getElementById("error");
+
+    function setError(msg) {
+      errorEl.textContent = msg ? " — " + msg : "";
+    }
+
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleString();
+      } catch {
+        return "";
+      }
+    }
+
+    function renderMessage(msg) {
+      // avoid duplicates by id (optional)
+      if (msg?._id && document.getElementById("m_" + msg._id)) return;
+
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.id = msg?._id ? "m_" + msg._id : "";
+
+      const username = msg?.user?.username ?? "Unknown";
+      const status = msg?.status ?? "";
+      const date = msg?.date ? formatDate(msg.date) : "";
+
+      div.innerHTML = `
+        <div class="meta">
+          <div><b>${username}</b> <span class="pill ${status}">${status}</span></div>
+          <div>${date}</div>
+        </div>
+        <div class="content"></div>
+      `;
+
+      div.querySelector(".content").textContent = msg?.content ?? "";
+
+      list.prepend(div);
+    }
+
+    async function loadUsers() {
+      setError("");
+      userSelect.innerHTML = `<option value="">Select user...</option>`;
+
+      const res = await fetch(`${BASE_URL}/users`);
+      if (!res.ok) throw new Error("Failed to load users");
+
+      const users = await res.json();
+      for (const u of users) {
+        const opt = document.createElement("option");
+        opt.value = u._id; // Mongo ObjectId (string)
+        opt.textContent = u.username;
+        userSelect.appendChild(opt);
+      }
+    }
+
+    async function loadOldMessages() {
+      setError("");
+      const res = await fetch(`${BASE_URL}/messages/with-user/all`);
+      if (!res.ok) throw new Error("Failed to load messages");
+
+      const messages = await res.json();
+      // show oldest -> newest (so newest ends up on top after prepend)
+      for (let i = messages.length - 1; i >= 0; i--) {
+        renderMessage(messages[i]);
+      }
+    }
+
+    async function sendMessage() {
+      setError("");
+
+      const userId = userSelect.value;
+      const content = msgInput.value.trim();
+
+      if (!userId) return setError("Select a user first.");
+      if (!content) return setError("Write a message first.");
+
+      btnSend.disabled = true;
+
+      try {
+        const res = await fetch(`${BASE_URL}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, content })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "POST /messages failed");
+        }
+
+        msgInput.value = "";
+        msgInput.focus();
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        btnSend.disabled = false;
+      }
+    }
+
+    // ----------------- Socket -----------------
+    const socket = io(BASE_URL);
+
+    socket.on("connect", () => {
+      connStatus.textContent = "✅ Connected";
+      connStatus.style.color = "#166534";
+      console.log("connected:", socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      connStatus.textContent = "❌ Disconnected";
+      connStatus.style.color = "#b91c1c";
+    });
+
+    socket.on("message:new", (msg) => {
+      console.log("message:new received:", msg);
+      renderMessage(msg);
+    });
+
+    // ----------------- UI events -----------------
+    btnSend.addEventListener("click", sendMessage);
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    btnReload.addEventListener("click", async () => {
+      try { await loadUsers(); } catch (e) { setError(e.message); }
+    });
+
+    btnLoadOld.addEventListener("click", async () => {
+      try { await loadOldMessages(); } catch (e) { setError(e.message); }
+    });
+
+    // initial load
+    (async () => {
+      try {
+        await loadUsers();
+        await loadOldMessages();
+      } catch (e) {
+        setError(e.message);
+      }
+    })();
+  </script>
+</body>
+</html>
