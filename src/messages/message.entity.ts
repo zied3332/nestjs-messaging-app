@@ -1,21 +1,26 @@
 import { Entity, ObjectIdColumn, Column, CreateDateColumn } from 'typeorm';
 import { ObjectId } from 'mongodb';
 
-@Entity()
+export type MessageStatus = 'sent' | 'seen';
+
+@Entity('messages')
 export class Message {
   @ObjectIdColumn()
   _id: ObjectId;
 
+  // ✅ conversation participants
+  @Column()
+  fromUserId: string; // store ObjectId as string
+
+  @Column()
+  toUserId: string;   // store ObjectId as string
+
   @Column()
   content: string;
 
-  @Column({ default: 'sent' }) // sent | seen
-  status: string;
-
-  // ✅ simple relation: store the user id
-  @Column()
-  userId: ObjectId;
+  @Column({ default: 'sent' })
+  status: MessageStatus;
 
   @CreateDateColumn()
-  date: Date;
+  createdAt: Date;
 }

@@ -37,4 +37,12 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   emitDeletedMessage(id: string) {
     this.server.emit('message:deleted', { id });
   }
+  emitMessageUpdated(payload: any) {
+  this.server.emit('message:updated', payload);
+}
+
+emitMessageDeleted(payload: { id: string }) {
+  this.server.emit('message:deleted', payload);
+}
+
 }

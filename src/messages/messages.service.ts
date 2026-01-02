@@ -1,98 +1,129 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
+
 import { Message } from './message.entity';
 import { CreateMessageDto } from './dtos/create-message.dto';
-import { UpdateMessageDto } from './dtos/update-message.dto';
 import { UsersService } from '../users/users.service';
 import { MessagesGateway } from './messages.gateway';
+
+type MsgStatus = 'sent' | 'seen';
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
-    private repo: MongoRepository<Message>,
-    private usersService: UsersService,
-  private gateway: MessagesGateway,
+    private readonly repo: MongoRepository<Message>,
+    private readonly usersService: UsersService,
+    private readonly gateway: MessagesGateway,
   ) {}
 
-async create(dto: CreateMessageDto) {
-  // validate user exists
-  const user = await this.usersService.findOne(dto.userId);
+  // ✅ Controller calls send() => keep this name
+  async send(fromUserId: string, dto: CreateMessageDto): Promise<Message> {
+    const fromUser = await this.usersService.findOne(fromUserId);
+    const toUser = await this.usersService.findOne(dto.toUserId);
 
-  const msg = this.repo.create({
-    content: dto.content,
-    status: 'sent',
-    userId: new ObjectId(dto.userId),
-    date: new Date(),
-  });
+    // ⚠️ Don't force TypeScript to treat create() as Message (it may infer Message[])
+    const msg = this.repo.create({
+      fromUserId,
+      toUserId: dto.toUserId,
+      content: dto.content,
+      status: 'sent',
+      createdAt: new Date(),
+    } as any);
 
-  const saved = await this.repo.save(msg);
+    // ✅ Force saved as single Message
+    const saved = (await this.repo.save(msg as any)) as unknown as Message;
 
-  // ✅ broadcast to clients
-  this.gateway.emitNewMessage({
-    _id: saved._id,
-    content: saved.content,
-    status: saved.status,
-    date: saved.date,
-    user: { _id: user._id, username: user.username },
-  });
+    this.gateway.emitNewMessage({
+      _id: (saved as any)._id,
+      content: (saved as any).content,
+      status: (saved as any).status,
+      createdAt: (saved as any).createdAt,
+      fromUserId: (saved as any).fromUserId,
+      toUserId: (saved as any).toUserId,
+      fromUser: { _id: fromUser._id, username: fromUser.username },
+      toUser: { _id: toUser._id, username: toUser.username },
+    });
 
-  return saved;
-}
-
-
-  async findAll() {
-    return await this.repo.find({ order: { date: 'DESC' as any } });
+    return saved;
   }
 
-  async findOne(id: string) {
+  async getConversation(meId: string, otherUserId: string) {
+    await this.usersService.findOne(otherUserId);
+
+    const messages = await this.repo.find({
+      where: {
+        $or: [
+          { fromUserId: meId, toUserId: otherUserId },
+          { fromUserId: otherUserId, toUserId: meId },
+        ],
+      } as any,
+      order: { createdAt: 'ASC' as any },
+    });
+
+    const me = await this.usersService.findOne(meId);
+    const other = await this.usersService.findOne(otherUserId);
+
+    return (messages as any[]).map((m) => ({
+      ...m,
+      fromUser:
+        m.fromUserId === meId
+          ? { _id: me._id, username: me.username }
+          : { _id: other._id, username: other.username },
+      toUser:
+        m.toUserId === meId
+          ? { _id: me._id, username: me.username }
+          : { _id: other._id, username: other.username },
+    }));
+  }
+
+  async findOne(id: string): Promise<Message> {
     const msg = await this.repo.findOneBy({ _id: new ObjectId(id) } as any);
     if (!msg) throw new NotFoundException('Message not found');
-    return msg;
-  }
-async update(id: string, attrs: UpdateMessageDto) {
-  const msg = await this.findOne(id); // or your existing findOne logic
-  Object.assign(msg, attrs);
-  return this.repo.save(msg);
-}
-
-async remove(id: string) {
-  const msg = await this.findOne(id);
-  await this.repo.remove(msg);
-  return { deleted: true };
-}
-
-  async findAllWithUser() {
-    return await this.repo.aggregate([
-      { $sort: { date: -1 } },
-      {
-        $lookup: {
-          from: 'user',            // collection name (often 'user' or 'users' in Mongo)
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          content: 1,
-          status: 1,
-          date: 1,
-          userId: 1,
-          user: { _id: 1, username: 1, createdAt: 1 },
-        },
-      },
-    ]).toArray();
+    return msg as any;
   }
 
-  async findByUserWithUser(userId: string) {
-  return this.repo.aggregate([
-    { $match: { userId: userId } },   // or user: ObjectId(userId) depends on your schema
-    // join user info (lookup)
-  ]).toArray();
-}
+  async updateStatus(meId: string, id: string, status: MsgStatus): Promise<Message> {
+    const msg: any = await this.findOne(id);
 
+    if (msg.fromUserId !== meId && msg.toUserId !== meId) {
+      throw new ForbiddenException('Not allowed');
+    }
+    if (status !== 'sent' && status !== 'seen') {
+      throw new ForbiddenException('Invalid status');
+    }
+
+    msg.status = status;
+    const saved = (await this.repo.save(msg as any)) as unknown as Message;
+
+    this.gateway.emitMessageUpdated({
+      _id: (saved as any)._id,
+      status: (saved as any).status,
+      content: (saved as any).content,
+      createdAt: (saved as any).createdAt,
+      fromUserId: (saved as any).fromUserId,
+      toUserId: (saved as any).toUserId,
+    });
+
+    return saved;
+  }
+
+  async deleteMessage(meId: string, id: string) {
+    const msg: any = await this.findOne(id);
+
+    if (msg.fromUserId !== meId) {
+      throw new ForbiddenException('Only sender can delete');
+    }
+
+    await this.repo.delete({ _id: new ObjectId(id) } as any);
+    this.gateway.emitMessageDeleted({ id });
+
+    return { deleted: true };
+  }
 }

@@ -1,11 +1,11 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateMessageDto {
   @IsString()
-  @MinLength(1)
-  content: string;
+  @IsNotEmpty()
+  toUserId: string;
 
-  // Mongo ObjectId arrives as string from client
   @IsString()
-  userId: string;
+  @IsNotEmpty()
+  content: string;
 }

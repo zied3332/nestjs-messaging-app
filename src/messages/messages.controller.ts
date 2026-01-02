@@ -1,32 +1,32 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dtos/create-message.dto';
-import { UpdateMessageDto } from './dtos/update-message.dto';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('messages')
+@UseGuards(AuthGuard('jwt'))
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
-  create(@Body() dto: CreateMessageDto) {
-    return this.messagesService.create(dto);
+  send(@CurrentUser() user: any, @Body() dto: CreateMessageDto) {
+    return this.messagesService.send(user.id, dto);
   }
 
-  // ✅ optional: used by your HTML "Load old messages"
-  @Get('with-user/all')
-  findAllWithUser() {
-    return this.messagesService.findAllWithUser();
+  @Get('with/:userId')
+  getConversation(@CurrentUser() user: any, @Param('userId') otherUserId: string) {
+    return this.messagesService.getConversation(user.id, otherUserId);
   }
 
-  // ✅ THIS fixes your PATCH
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMessageDto) {
-    return this.messagesService.update(id, dto);
+  update(@CurrentUser() user: any, @Param('id') id: string, @Body() body: { status: 'sent' | 'seen' }) {
+    return this.messagesService.updateStatus(user.id, id, body.status);
   }
 
-  // ✅ THIS fixes your DELETE
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.messagesService.remove(id);
+  remove(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.messagesService.deleteMessage(user.id, id);
   }
 }

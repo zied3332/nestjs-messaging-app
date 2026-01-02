@@ -7,12 +7,7 @@
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f5f6f8; }
-
-    .app {
-      height: 100vh;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-    }
+    .app { height: 100vh; display: grid; grid-template-columns: 280px 1fr; }
 
     /* Sidebar */
     .sidebar {
@@ -56,17 +51,9 @@
     }
 
     .userItem:hover { transform: translateY(-1px); }
-    .userItem.active {
-      border-color: #2563eb;
-      background: #eff6ff;
-    }
+    .userItem.active { border-color: #2563eb; background: #eff6ff; }
 
-    .userTop {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-    }
+    .userTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 
     .userName { font-weight: 800; font-size: 14px; color: #111; }
     .userId { font-size: 11px; color: #6b7280; word-break: break-all; }
@@ -77,14 +64,12 @@
       border-radius: 999px;
       background: #e5e7eb;
       display: inline-block;
+      text-transform: uppercase;
     }
     .pill.sent { background: #dbeafe; color: #1e40af; }
     .pill.seen { background: #dcfce7; color: #166534; }
 
-    .sidebarActions {
-      display: flex;
-      gap: 10px;
-    }
+    .sidebarActions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
     button {
       padding: 10px 14px;
@@ -117,18 +102,8 @@
       flex-wrap: wrap;
     }
 
-    .title {
-      font-size: 18px;
-      font-weight: 900;
-      margin: 0;
-    }
-
-    .status {
-      margin-left: auto;
-      font-size: 13px;
-      color: #555;
-    }
-
+    .title { font-size: 18px; font-weight: 900; margin: 0; }
+    .status { margin-left: auto; font-size: 13px; color: #555; }
     .danger { color: #b91c1c; font-size: 12px; }
 
     .composer {
@@ -170,19 +145,18 @@
     }
 
     .hint { font-size: 12px; color: #6b7280; }
-
-    .list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-    }
+    .list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
     .msg {
       padding: 12px;
       border-radius: 12px;
       background: #f3f4f6;
       border: 1px solid #eee;
+    }
+
+    .msg.mine {
+      background: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .meta {
@@ -196,19 +170,8 @@
       flex-wrap: wrap;
     }
 
-    .content {
-      font-size: 14px;
-      color: #111;
-      white-space: pre-wrap;
-    }
-
-    .msgActions {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
+    .content { font-size: 14px; color: #111; white-space: pre-wrap; }
+    .msgActions { margin-top: 10px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 
     .empty {
       padding: 14px;
@@ -220,41 +183,47 @@
       margin-top: 10px;
     }
 
-    /* ---------- Login Modal ---------- */
+    /* ---------- Auth Modal ---------- */
     .modalOverlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.45);
-      display: none; /* shown by JS */
+      display: none;
       align-items: center;
       justify-content: center;
       padding: 16px;
       z-index: 9999;
     }
+
     .modal {
       width: 100%;
-      max-width: 420px;
+      max-width: 460px;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 20px 60px rgba(0,0,0,.25);
       padding: 16px;
     }
+
     .modal h2 { margin: 0; font-size: 18px; }
     .modal p { margin: 6px 0 0; font-size: 12px; color: #6b7280; }
-    .modal .field {
+
+    .grid2 {
       margin-top: 12px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
-      align-items: center;
     }
-    .modal input {
-      flex: 1;
+
+    .grid2 input {
       padding: 10px 12px;
       border: 1px solid #ddd;
       border-radius: 10px;
       font-size: 14px;
       outline: none;
+      width: 100%;
+      box-sizing: border-box;
     }
+
     .modalFooter {
       margin-top: 12px;
       display: flex;
@@ -263,7 +232,9 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
     .modalError { color: #b91c1c; font-size: 12px; }
+
     .chip {
       font-size: 12px;
       background: #eff6ff;
@@ -276,23 +247,31 @@
       align-items: center;
     }
     .chip b { font-size: 12px; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { height: 42vh; }
+      .main { height: 58vh; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- LOGIN MODAL -->
-  <div class="modalOverlay" id="loginOverlay">
+  <!-- AUTH MODAL -->
+  <div class="modalOverlay" id="authOverlay">
     <div class="modal">
-      <h2>🔐 Login</h2>
-      <p>Enter a username. If it doesn’t exist, the backend can create it (Option A).</p>
+      <h2>🔐 Auth</h2>
+      <p>Login or Register using username + password (JWT backend).</p>
 
-      <div class="field">
-        <input id="loginUsername" type="text" placeholder="username (ex: zied)" />
-        <button class="primary" id="btnLogin">Login</button>
+      <div class="grid2">
+        <input id="authUsername" type="text" placeholder="username (ex: zied)" autocomplete="username" />
+        <input id="authPassword" type="password" placeholder="password" autocomplete="current-password" />
       </div>
 
       <div class="modalFooter">
-        <span class="modalError" id="loginError"></span>
+        <span class="modalError" id="authError"></span>
+        <button class="gray" id="btnRegister">Register</button>
+        <button class="primary" id="btnLogin">Login</button>
       </div>
     </div>
   </div>
@@ -319,7 +298,7 @@
       <div id="usersList" class="users"></div>
 
       <div class="hint">
-        Tip: create users using <b>POST /users</b> or login auto-creates.
+        Backend: <b>POST /auth/register</b>, <b>POST /auth/login</b>
       </div>
     </aside>
 
@@ -355,9 +334,10 @@
   <script>
     const BASE_URL = "http://localhost:3001";
 
-    // -------- Login state --------
-    const LS_KEY = "messaging_logged_user"; // store { _id, username }
-    let me = null; // logged in user
+    // ✅ store both token + user
+    const LS_KEY = "messaging_auth"; // { token, user }
+    let me = null;      // { _id, username }
+    let token = null;   // JWT string
 
     // UI refs
     const usersListEl = document.getElementById("usersList");
@@ -380,23 +360,20 @@
     const emptyState = document.getElementById("emptyState");
     const hintText = document.getElementById("hintText");
 
-    // login modal refs
-    const loginOverlay = document.getElementById("loginOverlay");
-    const loginUsername = document.getElementById("loginUsername");
+    // auth modal refs
+    const authOverlay = document.getElementById("authOverlay");
+    const authUsername = document.getElementById("authUsername");
+    const authPassword = document.getElementById("authPassword");
     const btnLogin = document.getElementById("btnLogin");
-    const loginError = document.getElementById("loginError");
+    const btnRegister = document.getElementById("btnRegister");
+    const authError = document.getElementById("authError");
 
     // state
     let allUsers = [];
-    let selectedUser = null; // { _id, username }
+    let selectedUser = null;
 
-    function setError(msg) {
-      errorEl.textContent = msg ? " — " + msg : "";
-    }
-
-    function setLoginError(msg) {
-      loginError.textContent = msg || "";
-    }
+    function setError(msg) { errorEl.textContent = msg ? " — " + msg : ""; }
+    function setAuthError(msg) { authError.textContent = msg || ""; }
 
     function formatDate(iso) {
       try { return new Date(iso).toLocaleString(); }
@@ -412,53 +389,166 @@
       emptyState.style.display = list.children.length === 0 ? "block" : "none";
     }
 
-    function setUiLocked(isLocked) {
-      // left side
-      userSearchEl.disabled = isLocked;
-      btnReloadUsers.disabled = isLocked;
+    function setUiLocked(locked) {
+      userSearchEl.disabled = locked;
+      btnReloadUsers.disabled = locked;
 
-      // right side
-      msgInput.disabled = isLocked || !selectedUser;
-      btnSend.disabled = isLocked || !selectedUser;
-      btnLoadOld.disabled = isLocked || !selectedUser;
+      msgInput.disabled = locked || !selectedUser;
+      btnSend.disabled = locked || !selectedUser;
+      btnLoadOld.disabled = locked || !selectedUser;
     }
 
-    function openLoginModal() {
-      loginOverlay.style.display = "flex";
-      setLoginError("");
+    function openAuthModal() {
+      authOverlay.style.display = "flex";
       setUiLocked(true);
-      setTimeout(() => loginUsername.focus(), 0);
+      setAuthError("");
+      setTimeout(() => authUsername.focus(), 0);
     }
 
-    function closeLoginModal() {
-      loginOverlay.style.display = "none";
+    function closeAuthModal() {
+      authOverlay.style.display = "none";
     }
 
-    function saveMe(user) {
-      me = user;
-      localStorage.setItem(LS_KEY, JSON.stringify(user));
-      meName.textContent = user.username;
+    function saveAuth(data) {
+      token = data.access_token;
+      me = data.user;
+      localStorage.setItem(LS_KEY, JSON.stringify({ token, user: me }));
+
+      meName.textContent = me.username;
       meChip.style.display = "inline-flex";
       btnLogout.style.display = "inline-flex";
       sidebarSub.textContent = "Logged in. Select a user to see messages.";
+      hintText.textContent = "Pick a user to load messages.";
+
       setUiLocked(false);
     }
 
-    function clearMe() {
+    function clearAuth() {
+      token = null;
       me = null;
       localStorage.removeItem(LS_KEY);
+
       meChip.style.display = "none";
       btnLogout.style.display = "none";
       sidebarSub.textContent = "Login to start";
+
       selectedUser = null;
       selectedTitle.textContent = "👤 Select a user";
       hintText.textContent = "Login, then pick a user to load messages.";
       clearMessagesUI();
+
       setUiLocked(true);
-      openLoginModal();
+      openAuthModal();
     }
 
-    // ✅ Update message in DOM
+    // ✅ helper: fetch with auth header
+    async function fetchAuth(url, options = {}) {
+      const headers = Object.assign(
+        { "Content-Type": "application/json" },
+        options.headers || {}
+      );
+
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch(url, { ...options, headers });
+
+      // optional: auto-logout if token expired
+      if (res.status === 401) {
+        clearAuth();
+        throw new Error("Session expired. Please login again.");
+      }
+
+      return res;
+    }
+
+    // ------------------ Users ------------------
+    function renderUsers(users) {
+      usersListEl.innerHTML = "";
+
+      let shown = 0;
+
+      for (const u of users) {
+        if (me?._id && u._id === me._id) continue; // hide self
+
+        shown++;
+
+        const item = document.createElement("div");
+        item.className = "userItem" + (selectedUser?._id === u._id ? " active" : "");
+        item.dataset.id = u._id;
+
+        item.innerHTML = `
+          <div class="userTop">
+            <div class="userName">${u.username}</div>
+          </div>
+          <div class="userId">${u._id}</div>
+        `;
+
+        item.addEventListener("click", () => selectUser(u));
+        usersListEl.appendChild(item);
+      }
+
+      if (shown === 0) {
+        usersListEl.innerHTML = `<div class="empty">No users found.</div>`;
+      }
+    }
+
+    async function loadUsers() {
+      setError("");
+      // you can protect /users later. Keep public for now.
+      const res = await fetch(`${BASE_URL}/users`);
+      if (!res.ok) throw new Error("Failed to load users");
+      allUsers = await res.json();
+      applyUserFilter();
+    }
+
+    function applyUserFilter() {
+      const q = (userSearchEl.value || "").toLowerCase().trim();
+      const filtered = q
+        ? allUsers.filter(u => (u.username || "").toLowerCase().includes(q))
+        : allUsers;
+
+      renderUsers(filtered);
+    }
+
+    async function selectUser(u) {
+      selectedUser = u;
+      setError("");
+
+      selectedTitle.textContent = `👤 ${u.username}`;
+      hintText.textContent = `Conversation with ${u.username}`;
+
+      applyUserFilter();
+      setUiLocked(!me);
+
+      await loadMessagesForSelectedUser();
+    }
+
+    // ------------------ Messages loading ------------------
+    async function loadMessagesForSelectedUser() {
+      if (!selectedUser?._id) return;
+
+      clearMessagesUI();
+      setError("");
+
+      // ✅ NEW backend: conversation endpoint
+      const res = await fetchAuth(`${BASE_URL}/messages/with/${selectedUser._id}`, { method: "GET" });
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        setError(`GET /messages/with/:id failed. ${t ? ("(" + t + ")") : ""}`);
+        showEmptyIfNeeded();
+        return;
+      }
+
+      const messages = await res.json();
+
+      // show oldest -> newest, but we prepend so reverse to keep newest on top
+      for (let i = messages.length - 1; i >= 0; i--) {
+        renderMessage(messages[i]);
+      }
+      showEmptyIfNeeded();
+    }
+
+    // ------------------ Message rendering ------------------
     function updateMessageInDOM(id, changes) {
       const el = document.getElementById("m_" + id);
       if (!el) return;
@@ -482,25 +572,34 @@
       showEmptyIfNeeded();
     }
 
-    // ✅ render one message
+    function getSenderName(msg) {
+      // backend may send: fromUser / user
+      return msg?.fromUser?.username
+        || msg?.user?.username
+        || "Unknown";
+    }
+
+    function isMine(msg) {
+      const fromId = msg?.fromUserId || msg?.fromUser?._id;
+      return !!(me?._id && fromId && (String(fromId) === String(me._id)));
+    }
+
     function renderMessage(msg) {
       if (!msg?._id) return;
-
-      // avoid duplicates
       if (document.getElementById("m_" + msg._id)) return;
 
       const div = document.createElement("div");
-      div.className = "msg";
+      div.className = "msg" + (isMine(msg) ? " mine" : "");
       div.id = "m_" + msg._id;
 
-      const username = msg?.user?.username ?? "Unknown";
+      const username = getSenderName(msg);
       const status = msg?.status ?? "";
-      const date = msg?.date ? formatDate(msg.date) : "";
+      const date = msg?.createdAt ? formatDate(msg.createdAt) : "";
 
       div.innerHTML = `
         <div class="meta">
           <div>
-            <b>${username}</b>
+            <b>${username}${isMine(msg) ? " (me)" : ""}</b>
             <span class="pill ${status}">${status}</span>
           </div>
           <div>${date}</div>
@@ -515,7 +614,6 @@
 
       div.querySelector(".content").textContent = msg?.content ?? "";
 
-      // actions
       div.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", async () => {
           const action = btn.getAttribute("data-action");
@@ -523,13 +621,12 @@
 
           try {
             if (action === "delete") {
-              const res = await fetch(`${BASE_URL}/messages/${msg._id}`, { method: "DELETE" });
+              const res = await fetchAuth(`${BASE_URL}/messages/${msg._id}`, { method: "DELETE" });
               if (!res.ok) throw new Error("Delete failed");
               removeMessageFromDOM(msg._id);
             } else {
-              const res = await fetch(`${BASE_URL}/messages/${msg._id}`, {
+              const res = await fetchAuth(`${BASE_URL}/messages/${msg._id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: action })
               });
               if (!res.ok) throw new Error("Update failed");
@@ -545,88 +642,6 @@
       showEmptyIfNeeded();
     }
 
-    // ------------------ Users ------------------
-    function renderUsers(users) {
-      usersListEl.innerHTML = "";
-
-      if (users.length === 0) {
-        usersListEl.innerHTML = `<div class="empty">No users found.</div>`;
-        return;
-      }
-
-      for (const u of users) {
-        const item = document.createElement("div");
-        item.className = "userItem" + (selectedUser?._id === u._id ? " active" : "");
-        item.dataset.id = u._id;
-
-        item.innerHTML = `
-          <div class="userTop">
-            <div class="userName">${u.username}</div>
-          </div>
-          <div class="userId">${u._id}</div>
-        `;
-
-        item.addEventListener("click", () => selectUser(u));
-        usersListEl.appendChild(item);
-      }
-    }
-
-    async function loadUsers() {
-      setError("");
-      const res = await fetch(`${BASE_URL}/users`);
-      if (!res.ok) throw new Error("Failed to load users");
-      allUsers = await res.json();
-      applyUserFilter();
-    }
-
-    function applyUserFilter() {
-      const q = (userSearchEl.value || "").toLowerCase().trim();
-      const filtered = q
-        ? allUsers.filter(u => (u.username || "").toLowerCase().includes(q))
-        : allUsers;
-
-      renderUsers(filtered);
-    }
-
-    async function selectUser(u) {
-      selectedUser = u;
-      setError("");
-
-      selectedTitle.textContent = `👤 ${u.username}`;
-      hintText.textContent = `Showing messages for ${u.username}`;
-
-      // re-render users with active
-      applyUserFilter();
-
-      // enable composer now that user selected
-      setUiLocked(!me);
-
-      // load messages of this user
-      await loadMessagesForSelectedUser();
-    }
-
-    // ------------------ Messages loading ------------------
-    async function loadMessagesForSelectedUser() {
-      if (!selectedUser?._id) return;
-
-      clearMessagesUI();
-      setError("");
-
-      const res = await fetch(`${BASE_URL}/users/${selectedUser._id}/messages`);
-      if (!res.ok) {
-        setError("Backend endpoint missing: GET /users/:id/messages");
-        showEmptyIfNeeded();
-        return;
-      }
-
-      const messages = await res.json();
-
-      for (let i = messages.length - 1; i >= 0; i--) {
-        renderMessage(messages[i]);
-      }
-      showEmptyIfNeeded();
-    }
-
     // ------------------ Sending ------------------
     async function sendMessage() {
       setError("");
@@ -639,12 +654,10 @@
       btnSend.disabled = true;
 
       try {
-        // You can later change payload to include senderId too.
-        // For now, it sends message "for" selectedUser (same as your current backend).
-        const res = await fetch(`${BASE_URL}/messages`, {
+        // ✅ NEW backend payload: { toUserId, content }
+        const res = await fetchAuth(`${BASE_URL}/messages`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: selectedUser._id, content })
+          body: JSON.stringify({ toUserId: selectedUser._id, content })
         });
 
         if (!res.ok) {
@@ -661,19 +674,56 @@
       }
     }
 
-    // ------------------ Login ------------------
-    async function doLogin() {
-      setLoginError("");
-      const username = (loginUsername.value || "").trim();
-      if (!username) return setLoginError("Username is required.");
+    // ------------------ Auth (JWT) ------------------
+    async function doRegister() {
+      setAuthError("");
+      const username = (authUsername.value || "").trim();
+      const password = (authPassword.value || "").trim();
+      if (!username || !password) return setAuthError("Username + password are required.");
 
+      btnRegister.disabled = true;
+      btnLogin.disabled = true;
+
+      try {
+        const res = await fetch(`${BASE_URL}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Register failed");
+        }
+
+        const data = await res.json();
+        if (!data?.access_token || !data?.user?._id) throw new Error("Invalid register response");
+
+        saveAuth(data);
+        closeAuthModal();
+        await loadUsers();
+      } catch (e) {
+        setAuthError(e.message);
+      } finally {
+        btnRegister.disabled = false;
+        btnLogin.disabled = false;
+      }
+    }
+
+    async function doLogin() {
+      setAuthError("");
+      const username = (authUsername.value || "").trim();
+      const password = (authPassword.value || "").trim();
+      if (!username || !password) return setAuthError("Username + password are required.");
+
+      btnRegister.disabled = true;
       btnLogin.disabled = true;
 
       try {
         const res = await fetch(`${BASE_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({ username, password })
         });
 
         if (!res.ok) {
@@ -682,29 +732,27 @@
         }
 
         const data = await res.json();
-        if (!data?.user?._id) throw new Error("Invalid login response");
+        if (!data?.access_token || !data?.user?._id) throw new Error("Invalid login response");
 
-        saveMe(data.user);
-        closeLoginModal();
-
-        // load users immediately after login
+        saveAuth(data);
+        closeAuthModal();
         await loadUsers();
-
       } catch (e) {
-        setLoginError(e.message);
+        setAuthError(e.message);
       } finally {
+        btnRegister.disabled = false;
         btnLogin.disabled = false;
       }
     }
 
     btnLogin.addEventListener("click", doLogin);
-    loginUsername.addEventListener("keydown", (e) => {
+    btnRegister.addEventListener("click", doRegister);
+
+    authPassword.addEventListener("keydown", (e) => {
       if (e.key === "Enter") doLogin();
     });
 
-    btnLogout.addEventListener("click", () => {
-      clearMe();
-    });
+    btnLogout.addEventListener("click", clearAuth);
 
     // ------------------ Socket ------------------
     const socket = io(BASE_URL);
@@ -720,11 +768,22 @@
       connStatus.style.color = "#b91c1c";
     });
 
+    // ✅ new message payload now contains fromUserId/toUserId + fromUser/toUser
     socket.on("message:new", (msg) => {
-      const senderId = msg?.user?._id || msg?.userId;
-      if (selectedUser?._id && senderId === selectedUser._id) {
-        renderMessage(msg);
-      }
+      if (!me?._id || !selectedUser?._id) return;
+
+      const fromId = String(msg?.fromUserId || msg?.fromUser?._id || "");
+      const toId   = String(msg?.toUserId   || msg?.toUser?._id   || "");
+
+      // show it only if it belongs to current open conversation
+      const meId = String(me._id);
+      const otherId = String(selectedUser._id);
+
+      const belongs =
+        (fromId === meId && toId === otherId) ||
+        (fromId === otherId && toId === meId);
+
+      if (belongs) renderMessage(msg);
     });
 
     socket.on("message:updated", (msg) => {
@@ -751,27 +810,33 @@
       try { await loadMessagesForSelectedUser(); } catch (e) { setError(e.message); }
     });
 
-    // initial boot
+    // ------------------ Boot ------------------
     (async () => {
-      // lock UI until login
       setUiLocked(true);
 
-      // restore session if exists
       const saved = localStorage.getItem(LS_KEY);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed && parsed._id && parsed.username) {
-            saveMe(parsed);
-            closeLoginModal();
+          if (parsed?.token && parsed?.user?._id) {
+            token = parsed.token;
+            me = parsed.user;
+
+            meName.textContent = me.username;
+            meChip.style.display = "inline-flex";
+            btnLogout.style.display = "inline-flex";
+            sidebarSub.textContent = "Logged in. Select a user to see messages.";
+            hintText.textContent = "Pick a user to load messages.";
+
+            setUiLocked(false);
+            closeAuthModal();
             await loadUsers();
             return;
           }
         } catch {}
       }
 
-      // otherwise show login popup
-      openLoginModal();
+      openAuthModal();
     })();
   </script>
 </body>

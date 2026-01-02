@@ -66,4 +66,14 @@ export class UsersService {
 
     return this.messagesRepo.aggregate(pipeline).toArray();
   }
+
+  findByUsername(username: string) {
+    return this.repo.findOne({ where: { username } });
+  }
+
+   async createUser(data: { username: string; passwordHash: string }) {
+    const user = this.repo.create(data);
+    return this.repo.save(user);
+  }
+
 }

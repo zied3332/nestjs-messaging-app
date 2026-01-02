@@ -1,24 +1,55 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async login(username: string) {
+  private toSafeUser(user: any) {
+    const { passwordHash, ...safe } = user;
+    return safe;
+  }
+
+  async register(username: string, password: string) {
     username = (username || '').trim();
-    if (!username) throw new BadRequestException('username is required');
+    if (!username || !password) throw new BadRequestException('username and password are required');
 
-    // ✅ if user exists -> return
-    const all = await this.usersService.findAll();
-    const existing = all.find(u => u.username === username);
+    const existing = await this.usersService.findByUsername(username);
+    if (existing) throw new BadRequestException('username already exists');
 
-    if (existing) {
-      return { user: existing };
-    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    const created = await this.usersService.createUser({ username, passwordHash });
 
-    // ✅ create user automatically (simple for exam)
-    const user = await this.usersService.create({ username });
-    return { user };
+    const safeUser = this.toSafeUser(created);
+    const access_token = await this.jwtService.signAsync({
+      sub: safeUser._id,
+      username: safeUser.username,
+    });
+
+    return { access_token, user: safeUser };
+  }
+
+  async login(username: string, password: string) {
+    username = (username || '').trim();
+    if (!username || !password) throw new BadRequestException('username and password are required');
+
+    const user = await this.usersService.findByUsername(username);
+    if (!user) throw new UnauthorizedException('invalid credentials');
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('invalid credentials');
+
+    const safeUser = this.toSafeUser(user);
+    const access_token = await this.jwtService.signAsync({
+      sub: safeUser._id,
+      username: safeUser.username,
+    });
+
+    return { access_token, user: safeUser };
   }
 }
