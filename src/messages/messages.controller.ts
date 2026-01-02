@@ -5,36 +5,28 @@ import { UpdateMessageDto } from './dtos/update-message.dto';
 
 @Controller('messages')
 export class MessagesController {
-  constructor(private messagesService: MessagesService) {}
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
   create(@Body() dto: CreateMessageDto) {
     return this.messagesService.create(dto);
   }
 
-  @Get()
-  findAll() {
-    return this.messagesService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.messagesService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMessageDto) {
-    return this.messagesService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.messagesService.remove(id);
-  
-}
+  // ✅ optional: used by your HTML "Load old messages"
   @Get('with-user/all')
   findAllWithUser() {
     return this.messagesService.findAllWithUser();
   }
 
+  // ✅ THIS fixes your PATCH
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateMessageDto) {
+    return this.messagesService.update(id, dto);
+  }
+
+  // ✅ THIS fixes your DELETE
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.messagesService.remove(id);
+  }
 }

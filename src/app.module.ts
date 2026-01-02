@@ -6,6 +6,7 @@ import { Message } from './messages/message.entity';
 import { User } from './users/user.entity';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
 imports: [
@@ -24,6 +25,7 @@ imports: [
 
   MessagesModule,
   UsersModule,
+  AuthModule,
 ],
 
 })

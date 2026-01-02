@@ -52,18 +52,17 @@ async create(dto: CreateMessageDto) {
     if (!msg) throw new NotFoundException('Message not found');
     return msg;
   }
+async update(id: string, attrs: UpdateMessageDto) {
+  const msg = await this.findOne(id); // or your existing findOne logic
+  Object.assign(msg, attrs);
+  return this.repo.save(msg);
+}
 
-  async update(id: string, attrs: UpdateMessageDto) {
-    const msg = await this.findOne(id);
-    Object.assign(msg, attrs);
-    return await this.repo.save(msg);
-  }
-
-  async remove(id: string) {
-    const msg = await this.findOne(id);
-    await this.repo.remove(msg);
-    return { deleted: true };
-  }
+async remove(id: string) {
+  const msg = await this.findOne(id);
+  await this.repo.remove(msg);
+  return { deleted: true };
+}
 
   async findAllWithUser() {
     return await this.repo.aggregate([
@@ -88,4 +87,12 @@ async create(dto: CreateMessageDto) {
       },
     ]).toArray();
   }
+
+  async findByUserWithUser(userId: string) {
+  return this.repo.aggregate([
+    { $match: { userId: userId } },   // or user: ObjectId(userId) depends on your schema
+    // join user info (lookup)
+  ]).toArray();
+}
+
 }

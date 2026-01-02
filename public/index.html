@@ -7,95 +7,491 @@
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f5f6f8; }
-    .container { max-width: 900px; margin: 30px auto; padding: 0 16px; }
-    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
-    h1 { margin: 0 0 10px; font-size: 22px; }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    select, input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
-    input { flex: 1; min-width: 220px; }
-    button { padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; }
-    button.primary { background: #2563eb; color: white; }
-    button.gray { background: #e5e7eb; }
-    .status { font-size: 13px; margin-left: auto; color: #555; }
-    .list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .msg { padding: 12px; border-radius: 12px; background: #f3f4f6; }
-    .meta { font-size: 12px; color: #555; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 10px; }
-    .content { font-size: 14px; color: #111; white-space: pre-wrap; }
-    .pill { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #e5e7eb; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .brand { font-size: 18px; font-weight: 800; margin: 0; }
+    .sub { font-size: 12px; color: #6b7280; margin-top: -8px; }
+
+    .search {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .users {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 6px;
+    }
+
+    .userItem {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #fafafa;
+      transition: 0.15s;
+    }
+
+    .userItem:hover { transform: translateY(-1px); }
+    .userItem.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .userTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .userName { font-weight: 800; font-size: 14px; color: #111; }
+    .userId { font-size: 11px; color: #6b7280; word-break: break-all; }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      display: inline-block;
+    }
     .pill.sent { background: #dbeafe; color: #1e40af; }
     .pill.seen { background: #dcfce7; color: #166534; }
-    .small { font-size: 12px; color: #666; margin-top: 10px; }
-    .danger { color: #b91c1c; }
+
+    .sidebarActions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    button.primary { background: #2563eb; color: white; }
+    button.gray { background: #e5e7eb; }
+    button.dangerBtn { background: #fee2e2; color: #991b1b; }
+
+    /* Main */
+    .main {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .headerCard {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .status {
+      margin-left: auto;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .danger { color: #b91c1c; font-size: 12px; }
+
+    .composer {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .composer input {
+      flex: 1;
+      min-width: 240px;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .messagesCard {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      flex: 1;
+      overflow: auto;
+    }
+
+    .messagesTop {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .hint { font-size: 12px; color: #6b7280; }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .msg {
+      padding: 12px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      border: 1px solid #eee;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .content {
+      font-size: 14px;
+      color: #111;
+      white-space: pre-wrap;
+    }
+
+    .msgActions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      padding: 14px;
+      border: 1px dashed #ddd;
+      border-radius: 12px;
+      color: #6b7280;
+      background: #fafafa;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    /* ---------- Login Modal ---------- */
+    .modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none; /* shown by JS */
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 16px;
+    }
+    .modal h2 { margin: 0; font-size: 18px; }
+    .modal p { margin: 6px 0 0; font-size: 12px; color: #6b7280; }
+    .modal .field {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .modal input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    .modalFooter {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .modalError { color: #b91c1c; font-size: 12px; }
+    .chip {
+      font-size: 12px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .chip b { font-size: 12px; }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>💬 Messaging App (NestJS + Socket.io)</h1>
+  <!-- LOGIN MODAL -->
+  <div class="modalOverlay" id="loginOverlay">
+    <div class="modal">
+      <h2>🔐 Login</h2>
+      <p>Enter a username. If it doesn’t exist, the backend can create it (Option A).</p>
 
-      <div class="row">
-        <button class="gray" id="btnReload">↻ Reload users</button>
+      <div class="field">
+        <input id="loginUsername" type="text" placeholder="username (ex: zied)" />
+        <button class="primary" id="btnLogin">Login</button>
+      </div>
 
-        <select id="userSelect">
-          <option value="">Select user...</option>
-        </select>
+      <div class="modalFooter">
+        <span class="modalError" id="loginError"></span>
+      </div>
+    </div>
+  </div>
 
+  <div class="app">
+    <!-- LEFT: Users -->
+    <aside class="sidebar">
+      <p class="brand">💬 Messaging App</p>
+      <p class="sub" id="sidebarSub">Login to start</p>
+
+      <div class="sidebarActions">
+        <span class="chip" id="meChip" style="display:none;">
+          Logged as <b id="meName">-</b>
+        </span>
+        <button class="dangerBtn" id="btnLogout" style="display:none;">Logout</button>
+      </div>
+
+      <input id="userSearch" class="search" type="text" placeholder="Search user..." disabled />
+
+      <div class="sidebarActions">
+        <button class="gray" id="btnReloadUsers" disabled>↻ Reload</button>
+      </div>
+
+      <div id="usersList" class="users"></div>
+
+      <div class="hint">
+        Tip: create users using <b>POST /users</b> or login auto-creates.
+      </div>
+    </aside>
+
+    <!-- RIGHT: Messages -->
+    <main class="main">
+      <div class="headerCard">
+        <p class="title" id="selectedTitle">👤 Select a user</p>
         <span class="status" id="connStatus">Connecting...</span>
-      </div>
-
-      <div class="row" style="margin-top: 10px;">
-        <input id="msgInput" type="text" placeholder="Type a message..." />
-        <button class="primary" id="btnSend">Send</button>
-      </div>
-
-      <div class="small">
-        Tip: Create users using <b>POST /users</b> once, then pick them here.
         <span id="error" class="danger"></span>
       </div>
-    </div>
 
-    <div class="card" style="margin-top: 16px;">
-      <div class="row">
-        <h1 style="margin:0;">📨 Messages</h1>
-        <button class="gray" id="btnLoadOld" style="margin-left:auto;">Load old messages</button>
+      <div class="composer">
+        <input id="msgInput" type="text" placeholder="Type a message..." disabled />
+        <button class="primary" id="btnSend" disabled>Send</button>
+        <button class="gray" id="btnLoadOld" disabled>Load messages</button>
       </div>
-      <div id="list" class="list"></div>
-    </div>
+
+      <div class="messagesCard">
+        <div class="messagesTop">
+          <b>📨 Messages</b>
+          <span class="hint" id="hintText">Login, then pick a user to load messages.</span>
+        </div>
+
+        <div id="list" class="list"></div>
+        <div id="emptyState" class="empty" style="display:none;">
+          No messages for this user yet.
+        </div>
+      </div>
+    </main>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const BASE_URL = "http://localhost:3001";
 
-    const userSelect = document.getElementById("userSelect");
-    const msgInput = document.getElementById("msgInput");
-    const btnSend = document.getElementById("btnSend");
-    const btnReload = document.getElementById("btnReload");
-    const btnLoadOld = document.getElementById("btnLoadOld");
-    const list = document.getElementById("list");
+    // -------- Login state --------
+    const LS_KEY = "messaging_logged_user"; // store { _id, username }
+    let me = null; // logged in user
+
+    // UI refs
+    const usersListEl = document.getElementById("usersList");
+    const userSearchEl = document.getElementById("userSearch");
+    const btnReloadUsers = document.getElementById("btnReloadUsers");
+    const sidebarSub = document.getElementById("sidebarSub");
+    const meChip = document.getElementById("meChip");
+    const meName = document.getElementById("meName");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const selectedTitle = document.getElementById("selectedTitle");
     const connStatus = document.getElementById("connStatus");
     const errorEl = document.getElementById("error");
+
+    const msgInput = document.getElementById("msgInput");
+    const btnSend = document.getElementById("btnSend");
+    const btnLoadOld = document.getElementById("btnLoadOld");
+
+    const list = document.getElementById("list");
+    const emptyState = document.getElementById("emptyState");
+    const hintText = document.getElementById("hintText");
+
+    // login modal refs
+    const loginOverlay = document.getElementById("loginOverlay");
+    const loginUsername = document.getElementById("loginUsername");
+    const btnLogin = document.getElementById("btnLogin");
+    const loginError = document.getElementById("loginError");
+
+    // state
+    let allUsers = [];
+    let selectedUser = null; // { _id, username }
 
     function setError(msg) {
       errorEl.textContent = msg ? " — " + msg : "";
     }
 
+    function setLoginError(msg) {
+      loginError.textContent = msg || "";
+    }
+
     function formatDate(iso) {
-      try {
-        return new Date(iso).toLocaleString();
-      } catch {
-        return "";
+      try { return new Date(iso).toLocaleString(); }
+      catch { return ""; }
+    }
+
+    function clearMessagesUI() {
+      list.innerHTML = "";
+      emptyState.style.display = "none";
+    }
+
+    function showEmptyIfNeeded() {
+      emptyState.style.display = list.children.length === 0 ? "block" : "none";
+    }
+
+    function setUiLocked(isLocked) {
+      // left side
+      userSearchEl.disabled = isLocked;
+      btnReloadUsers.disabled = isLocked;
+
+      // right side
+      msgInput.disabled = isLocked || !selectedUser;
+      btnSend.disabled = isLocked || !selectedUser;
+      btnLoadOld.disabled = isLocked || !selectedUser;
+    }
+
+    function openLoginModal() {
+      loginOverlay.style.display = "flex";
+      setLoginError("");
+      setUiLocked(true);
+      setTimeout(() => loginUsername.focus(), 0);
+    }
+
+    function closeLoginModal() {
+      loginOverlay.style.display = "none";
+    }
+
+    function saveMe(user) {
+      me = user;
+      localStorage.setItem(LS_KEY, JSON.stringify(user));
+      meName.textContent = user.username;
+      meChip.style.display = "inline-flex";
+      btnLogout.style.display = "inline-flex";
+      sidebarSub.textContent = "Logged in. Select a user to see messages.";
+      setUiLocked(false);
+    }
+
+    function clearMe() {
+      me = null;
+      localStorage.removeItem(LS_KEY);
+      meChip.style.display = "none";
+      btnLogout.style.display = "none";
+      sidebarSub.textContent = "Login to start";
+      selectedUser = null;
+      selectedTitle.textContent = "👤 Select a user";
+      hintText.textContent = "Login, then pick a user to load messages.";
+      clearMessagesUI();
+      setUiLocked(true);
+      openLoginModal();
+    }
+
+    // ✅ Update message in DOM
+    function updateMessageInDOM(id, changes) {
+      const el = document.getElementById("m_" + id);
+      if (!el) return;
+
+      if (changes.status) {
+        const pill = el.querySelector(".pill");
+        if (pill) {
+          pill.className = "pill " + changes.status;
+          pill.textContent = changes.status;
+        }
+      }
+      if (typeof changes.content === "string") {
+        const contentDiv = el.querySelector(".content");
+        if (contentDiv) contentDiv.textContent = changes.content;
       }
     }
 
+    function removeMessageFromDOM(id) {
+      const el = document.getElementById("m_" + id);
+      if (el) el.remove();
+      showEmptyIfNeeded();
+    }
+
+    // ✅ render one message
     function renderMessage(msg) {
-      // avoid duplicates by id (optional)
-      if (msg?._id && document.getElementById("m_" + msg._id)) return;
+      if (!msg?._id) return;
+
+      // avoid duplicates
+      if (document.getElementById("m_" + msg._id)) return;
 
       const div = document.createElement("div");
       div.className = "msg";
-      div.id = msg?._id ? "m_" + msg._id : "";
+      div.id = "m_" + msg._id;
 
       const username = msg?.user?.username ?? "Unknown";
       const status = msg?.status ?? "";
@@ -103,61 +499,152 @@
 
       div.innerHTML = `
         <div class="meta">
-          <div><b>${username}</b> <span class="pill ${status}">${status}</span></div>
+          <div>
+            <b>${username}</b>
+            <span class="pill ${status}">${status}</span>
+          </div>
           <div>${date}</div>
         </div>
         <div class="content"></div>
+        <div class="msgActions">
+          <button class="gray" data-action="seen">Mark seen</button>
+          <button class="gray" data-action="sent">Mark sent</button>
+          <button class="gray" data-action="delete">Delete</button>
+        </div>
       `;
 
       div.querySelector(".content").textContent = msg?.content ?? "";
 
+      // actions
+      div.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const action = btn.getAttribute("data-action");
+          if (!msg?._id) return;
+
+          try {
+            if (action === "delete") {
+              const res = await fetch(`${BASE_URL}/messages/${msg._id}`, { method: "DELETE" });
+              if (!res.ok) throw new Error("Delete failed");
+              removeMessageFromDOM(msg._id);
+            } else {
+              const res = await fetch(`${BASE_URL}/messages/${msg._id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: action })
+              });
+              if (!res.ok) throw new Error("Update failed");
+              updateMessageInDOM(msg._id, { status: action });
+            }
+          } catch (e) {
+            setError(e.message);
+          }
+        });
+      });
+
       list.prepend(div);
+      showEmptyIfNeeded();
+    }
+
+    // ------------------ Users ------------------
+    function renderUsers(users) {
+      usersListEl.innerHTML = "";
+
+      if (users.length === 0) {
+        usersListEl.innerHTML = `<div class="empty">No users found.</div>`;
+        return;
+      }
+
+      for (const u of users) {
+        const item = document.createElement("div");
+        item.className = "userItem" + (selectedUser?._id === u._id ? " active" : "");
+        item.dataset.id = u._id;
+
+        item.innerHTML = `
+          <div class="userTop">
+            <div class="userName">${u.username}</div>
+          </div>
+          <div class="userId">${u._id}</div>
+        `;
+
+        item.addEventListener("click", () => selectUser(u));
+        usersListEl.appendChild(item);
+      }
     }
 
     async function loadUsers() {
       setError("");
-      userSelect.innerHTML = `<option value="">Select user...</option>`;
-
       const res = await fetch(`${BASE_URL}/users`);
       if (!res.ok) throw new Error("Failed to load users");
-
-      const users = await res.json();
-      for (const u of users) {
-        const opt = document.createElement("option");
-        opt.value = u._id; // Mongo ObjectId (string)
-        opt.textContent = u.username;
-        userSelect.appendChild(opt);
-      }
+      allUsers = await res.json();
+      applyUserFilter();
     }
 
-    async function loadOldMessages() {
+    function applyUserFilter() {
+      const q = (userSearchEl.value || "").toLowerCase().trim();
+      const filtered = q
+        ? allUsers.filter(u => (u.username || "").toLowerCase().includes(q))
+        : allUsers;
+
+      renderUsers(filtered);
+    }
+
+    async function selectUser(u) {
+      selectedUser = u;
       setError("");
-      const res = await fetch(`${BASE_URL}/messages/with-user/all`);
-      if (!res.ok) throw new Error("Failed to load messages");
+
+      selectedTitle.textContent = `👤 ${u.username}`;
+      hintText.textContent = `Showing messages for ${u.username}`;
+
+      // re-render users with active
+      applyUserFilter();
+
+      // enable composer now that user selected
+      setUiLocked(!me);
+
+      // load messages of this user
+      await loadMessagesForSelectedUser();
+    }
+
+    // ------------------ Messages loading ------------------
+    async function loadMessagesForSelectedUser() {
+      if (!selectedUser?._id) return;
+
+      clearMessagesUI();
+      setError("");
+
+      const res = await fetch(`${BASE_URL}/users/${selectedUser._id}/messages`);
+      if (!res.ok) {
+        setError("Backend endpoint missing: GET /users/:id/messages");
+        showEmptyIfNeeded();
+        return;
+      }
 
       const messages = await res.json();
-      // show oldest -> newest (so newest ends up on top after prepend)
+
       for (let i = messages.length - 1; i >= 0; i--) {
         renderMessage(messages[i]);
       }
+      showEmptyIfNeeded();
     }
 
+    // ------------------ Sending ------------------
     async function sendMessage() {
       setError("");
-
-      const userId = userSelect.value;
       const content = msgInput.value.trim();
 
-      if (!userId) return setError("Select a user first.");
+      if (!me?._id) return setError("Login first.");
+      if (!selectedUser?._id) return setError("Select a user first.");
       if (!content) return setError("Write a message first.");
 
       btnSend.disabled = true;
 
       try {
+        // You can later change payload to include senderId too.
+        // For now, it sends message "for" selectedUser (same as your current backend).
         const res = await fetch(`${BASE_URL}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, content })
+          body: JSON.stringify({ userId: selectedUser._id, content })
         });
 
         if (!res.ok) {
@@ -174,7 +661,52 @@
       }
     }
 
-    // ----------------- Socket -----------------
+    // ------------------ Login ------------------
+    async function doLogin() {
+      setLoginError("");
+      const username = (loginUsername.value || "").trim();
+      if (!username) return setLoginError("Username is required.");
+
+      btnLogin.disabled = true;
+
+      try {
+        const res = await fetch(`${BASE_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Login failed");
+        }
+
+        const data = await res.json();
+        if (!data?.user?._id) throw new Error("Invalid login response");
+
+        saveMe(data.user);
+        closeLoginModal();
+
+        // load users immediately after login
+        await loadUsers();
+
+      } catch (e) {
+        setLoginError(e.message);
+      } finally {
+        btnLogin.disabled = false;
+      }
+    }
+
+    btnLogin.addEventListener("click", doLogin);
+    loginUsername.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    btnLogout.addEventListener("click", () => {
+      clearMe();
+    });
+
+    // ------------------ Socket ------------------
     const socket = io(BASE_URL);
 
     socket.on("connect", () => {
@@ -189,32 +721,57 @@
     });
 
     socket.on("message:new", (msg) => {
-      console.log("message:new received:", msg);
-      renderMessage(msg);
+      const senderId = msg?.user?._id || msg?.userId;
+      if (selectedUser?._id && senderId === selectedUser._id) {
+        renderMessage(msg);
+      }
     });
 
-    // ----------------- UI events -----------------
+    socket.on("message:updated", (msg) => {
+      if (msg?._id) updateMessageInDOM(msg._id, { status: msg.status, content: msg.content });
+    });
+
+    socket.on("message:deleted", ({ id }) => {
+      if (id) removeMessageFromDOM(id);
+    });
+
+    // ------------------ Events ------------------
+    btnReloadUsers.addEventListener("click", async () => {
+      try { await loadUsers(); } catch (e) { setError(e.message); }
+    });
+
+    userSearchEl.addEventListener("input", applyUserFilter);
+
     btnSend.addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendMessage();
     });
 
-    btnReload.addEventListener("click", async () => {
-      try { await loadUsers(); } catch (e) { setError(e.message); }
-    });
-
     btnLoadOld.addEventListener("click", async () => {
-      try { await loadOldMessages(); } catch (e) { setError(e.message); }
+      try { await loadMessagesForSelectedUser(); } catch (e) { setError(e.message); }
     });
 
-    // initial load
+    // initial boot
     (async () => {
-      try {
-        await loadUsers();
-        await loadOldMessages();
-      } catch (e) {
-        setError(e.message);
+      // lock UI until login
+      setUiLocked(true);
+
+      // restore session if exists
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed._id && parsed.username) {
+            saveMe(parsed);
+            closeLoginModal();
+            await loadUsers();
+            return;
+          }
+        } catch {}
       }
+
+      // otherwise show login popup
+      openLoginModal();
     })();
   </script>
 </body>

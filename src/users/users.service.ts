@@ -2,14 +2,20 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
+
 import { User } from './user.entity';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { Message } from '../messages/message.entity'; // ✅ adjust path if needed
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private repo: MongoRepository<User>,
+    private readonly repo: MongoRepository<User>,
+
+    // ✅ Inject messages repository so getMessagesOfUser works
+    @InjectRepository(Message)
+    private readonly messagesRepo: MongoRepository<Message>,
   ) {}
 
   async create(dto: CreateUserDto) {
@@ -35,5 +41,29 @@ export class UsersService {
     await this.repo.remove(user);
     return { deleted: true };
   }
-  
+
+  // ✅ GET /users/:id/messages
+  async getMessagesOfUser(userId: string) {
+    // ensure user exists (nice for exam)
+    await this.findOne(userId);
+
+    const oid = new ObjectId(userId);
+
+    // ✅ Aggregation to return messages + joined user object
+    const pipeline: any[] = [
+      { $match: { userId: oid } },  // ✅ Message must contain userId:ObjectId
+      { $sort: { date: -1 } },
+      {
+        $lookup: {
+          from: 'users',           // ✅ collection name (often "users")
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+    ];
+
+    return this.messagesRepo.aggregate(pipeline).toArray();
+  }
 }

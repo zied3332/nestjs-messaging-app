@@ -25,4 +25,9 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+  @Get(':id/messages')
+getUserMessages(@Param('id') id: string) {
+  return this.usersService.getMessagesOfUser(id);
+}
+
 }

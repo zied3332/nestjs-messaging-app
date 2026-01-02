@@ -23,8 +23,18 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     console.log('❌ Client disconnected:', client.id);
   }
 
-  // ✅ helper to broadcast new messages
+  // ✅ broadcast: new message created
   emitNewMessage(payload: any) {
     this.server.emit('message:new', payload);
+  }
+
+  // ✅ broadcast: message updated (status/content)
+  emitUpdatedMessage(payload: any) {
+    this.server.emit('message:updated', payload);
+  }
+
+  // ✅ broadcast: message deleted
+  emitDeletedMessage(id: string) {
+    this.server.emit('message:deleted', { id });
   }
 }
